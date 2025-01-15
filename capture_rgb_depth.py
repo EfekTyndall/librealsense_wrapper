@@ -35,11 +35,7 @@ if not found_rgb:
     exit(0)
 
 config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-
-if device_product_line == "L500":
-    config.enable_stream(rs.stream.color, 960, 540, rs.format.bgr8, 30)
-else:
-    config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
 
 # Start streaming
 profile = pipeline.start(config)
@@ -73,7 +69,7 @@ for folder in [subfolder_depth, subfolder_rgb, subfolder_depth_unaligned, subfol
         os.makedirs(folder)
 
 # Create the out_foundationpose directory paths
-foundationpose_dir = os.path.join(script_dir, "out_foundationpose")
+foundationpose_dir = os.path.join(script_dir, "out_single")
 subfolder_depth_foundationpose = os.path.join(foundationpose_dir, "depth")
 subfolder_rgb_foundationpose = os.path.join(foundationpose_dir, "rgb")
 subfolder_depth_unaligned_foundationpose = os.path.join(foundationpose_dir, "depth_unaligned")
@@ -160,11 +156,31 @@ try:
                 RecordStream = True
                 start_time = time.time()  # Start the timer
 
+                # Prepare intrinsic parameters as a flat list for JSON
+                cam_K = [
+                    intrinsics.fx, 0.0, intrinsics.ppx,
+                    0.0, intrinsics.fy, intrinsics.ppy,
+                    0.0, 0.0, 1.0
+                ]
+
+                # Save intrinsic parameters as .txt
                 with open(os.path.join(script_dir, "out/cam_K.txt"), "w") as f:
                     f.write(f"{intrinsics.fx} {0.0} {intrinsics.ppx}\n")
                     f.write(f"{0.0} {intrinsics.fy} {intrinsics.ppy}\n")
                     f.write(f"{0.0} {0.0} {1.0}\n")
 
+                print("Intrinsic parameters saved to cam_K.txt")
+
+                # Save intrinsic parameters as .json
+                camera_intrinsics = {
+                    "cam_K": cam_K,
+                    "depth_scale": depth_scale
+                }
+
+                with open(os.path.join(script_dir, "out/cam_K.json"), "w") as f:
+                    json.dump(camera_intrinsics, f, indent=4)
+
+                print("Intrinsic parameters saved to cam_K.json")
                 print("Recording started")
             else:
                 RecordStream = False
@@ -198,7 +214,7 @@ try:
             cv2.imwrite(image_path_depth_unaligned_foundationpose, np.asanyarray(unaligned_depth_frame.get_data()))
             cv2.imwrite(image_path_rgb_unaligned_foundationpose, np.asanyarray(unaligned_color_frame.get_data()))
 
-            print(f"Captured single frame and saved to out_foundationpose at {framename}.png")
+            print(f"Captured single frame and saved to out_single at {framename}.png")
 
         # Press esc or 'q' to close the image window
         if key & 0xFF == ord("q") or key == 27:
