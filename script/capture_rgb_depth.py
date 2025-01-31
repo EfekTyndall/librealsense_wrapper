@@ -70,9 +70,9 @@ def main():
     # ------------------------------ #
     #  3. Prepare Output Directories #
     # ------------------------------ #
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    base_dir = "/home/martyn/Thesis/realsense-scripts/"
     res_folder = f"{width}x{height}"
-    out_base = os.path.join(script_dir, "out", res_folder)
+    out_base = os.path.join(base_dir, "out", res_folder)
     os.makedirs(out_base, exist_ok=True)
 
     # ----------------------------- #
